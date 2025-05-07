@@ -35,6 +35,50 @@ docker run --rm -p 8000:8000 -v "${HOME}/.config/google-chrome:/root/google-chro
 
 ```
 
+You can see the endpoint breakdown at [localhost:8000/docs](http://localhost:8000/docs)
+
+### Usage in docker-compose
+You probably want to do more than just slurp html; Sneaky Snake really shines when used to abstract just the messy scraping parts!
+
+```yaml
+services:
+    sneaky_snake:
+        hostname: sneaky-snake
+        image: ethanknox/sneaky_snake:latest
+        volumes:
+            - ~/Library/Application Support/Google/Chrome:/root/google-chrome
+    business_logic:
+        image: python:3.13
+        volumes:
+            - ./your_business_logic.py:/app/your_business_logic.py
+            - ./outputs:/app/outputs
+        cmd: python3 your_business_logic.py
+```
+
+```python
+
+# your_business_logic.py
+import requests
+
+response = requests.post("sneaky-snake/scrape", data={"urls": [
+    {"url": "https://google.com", "use_cache": False},
+    {"url": "https://linkedin.com"},
+    {"url": "https://potato.com"}
+]})
+
+request_ids = response.json()["request_ids"]
+
+while request_ids:
+    for id_ in request_ids:
+        response = requests.get(f"sneaky-snake/result/{id_}").json()
+        if response["processed"]:
+            request_ids.pop(request_ids.index(id_))
+            # do whatever bs4 parsing etc you want here
+            process_html_response(response["html"])
+```
+
+
+
 
 ## Other Envars and volume mounts
 

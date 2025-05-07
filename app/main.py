@@ -27,6 +27,7 @@ app = FastAPI(title="Sneaky Snake API",
 
 @app.get("/health")
 async def health_check():
+    """check if the API is running"""
     logger.debug("Health check requested")
     return JSONResponse(
         content={"status": "healthy"},
@@ -39,7 +40,7 @@ async def scrape(
     db: Session = Depends(get_db),
     background_tasks: BackgroundTasks = BackgroundTasks()
 ) -> ScrapeResponse:
-    """scrape url(s) and return the response bodies"""
+    """scrape url(s) and return scrape request IDs that can be used to retrieve the results"""
     logger.info(f"Received scrape request for {len(scrape_request.urls)} URLs")
     with db as session:
         cached_request_ids = []
@@ -78,7 +79,7 @@ async def get_result(
     result_id: str,
     db: Session = Depends(get_db)
 ) -> ScrapeResultSchema:
-    """get the result of a scrape"""
+    """get the result of a scrape by request ID"""
     logger.info(f"Fetching result for request_id: {result_id}")
     result = db.query(ScrapeResult).filter(ScrapeResult.request_id == result_id).first()
     if not result:

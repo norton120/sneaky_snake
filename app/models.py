@@ -15,6 +15,7 @@ class ResponseUrl(URL):
 class ScrapeRequest(BaseModel):
     urls: List[RequestUrl] = Field(description="The URLs to scrape")
     stealth: Optional[bool] = Field(default=False, description="If True, will attempt to use a more stealthy browser")
+    timeout: Optional[int] = Field(default=10000, description="The timeout for the scrape in milliseconds")
 
 class ScrapeResult(BaseModel):
     url: ResponseUrl = Field(description="The URL that was scraped")

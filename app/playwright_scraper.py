@@ -10,9 +10,10 @@ if TYPE_CHECKING:
     from playwright.sync_api import Browser, Page
 
 class Scraper:
-    browser: Optional["Browser"]
-    page: Optional["Page"]
-    stealth: bool
+    browser: Optional["Browser"] = None
+    page: Optional["Page"] = None
+    stealth: bool = False
+
     def __init__(self, reset_profile: bool = False, stealth: bool = False):
         logger.info(f"Initializing Scraper with reset_profile={reset_profile}")
         self.copy_profile(reset_profile)
@@ -50,7 +51,9 @@ class Scraper:
                 if self.browser:
                     self.browser.close()
 
-    def raw_scrape(self, url: str, selector: Optional[str] = None) -> str:
+    def raw_scrape(self, url: str,
+                   selector: Optional[str] = None,
+                   timeout: int = 10000) -> str:
         logger.info(f"Starting scrape of URL: {url}")
         with self.launch_browser():
             try:
@@ -63,9 +66,9 @@ class Scraper:
                 self.page.goto(url)
                 logger.debug("Waiting for page load")
                 if selector:
-                    self.page.wait_for_selector(selector, timeout=10000)
+                    self.page.wait_for_selector(selector, timeout=timeout)
                 else:
-                    self.page.wait_for_load_state("load", timeout=10000)
+                    self.page.wait_for_load_state("load", timeout=timeout)
                 html_content = self.page.content()
                 logger.info(f"Successfully scraped URL: {url}")
                 return html_content

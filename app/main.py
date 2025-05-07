@@ -115,7 +115,7 @@ def background_scrape(request_id: str,
                 return
             scraper = Scraper(stealth=stealth)
             logger.debug(f"Attempting to scrape URL: {result.url} with selector: {result.selector}")
-            result.content = scraper.raw_scrape(result.url, selector=result.selector)
+            result.content = scraper.raw_scrape(result.url, selector=result.selector, timeout=result.timeout)
             if not result.content:
                 logger.error(f"Failed to scrape URL: {result.url}")
             else:

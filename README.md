@@ -1,5 +1,6 @@
 # Sneaky Snake
-A low-volume web scraper using your local Chrome profile. For those small scraping jobs where simple, serialized processing is good enough. Sometimes you don't want to spend forever figuring out the
+A low-volume web scraper using your local Chrome profile. For those small scraping jobs where simple, serialized processing is good enough.
+Sometimes you don't want to spend forever figuring out the perfect scraping profile to evade the scraping protection and anti-bot boobytraps. Sometimes you would be fine handing over your logged-in, cookified, very-identifiable browser to a robot to just get some tedious things done... and this is when you need `Sneaky Snake`.
 
 ![sneaky snake](sneaky_snake.gif)
 

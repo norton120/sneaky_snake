@@ -1,7 +1,7 @@
 # Sneaky Snake
 A low-volume web scraper using your local Chrome profile. For those small scraping jobs where simple, serialized processing is good enough. Sometimes you don't want to spend forever figuring out the
 
-
+![sneaky snake](sneaky_snake.gif)
 
 ## Chrome Profile Setup
 
@@ -30,7 +30,7 @@ docker run --rm -p 8000:8000 -v "${HOME}/.config/google-chrome:/root/google-chro
 2. request a page scrape and get back the request_id
 ```bash
     >> curl -X 'POST' 'http://localhost:8000/scrape' -H 'accept: application/json'  -H 'Content-Type: application/json' -d '{ "urls": [{"url": "https://google.com", "use_cache": false}]}'
-    { "request_ids": [ "5b95e456-21fc-40f9-bfdb-6c9ed79550fd" ] }
+    ## { "request_ids": [ "5b95e456-21fc-40f9-bfdb-6c9ed79550fd" ] }
 
 ```
 

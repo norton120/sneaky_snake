@@ -21,6 +21,7 @@ class ScrapeResult(Base):
     content = Column(Text, nullable=True)
     processed = Column(Boolean, nullable=False, default=False)
     errors = Column(String, nullable=True)
+    selector = Column(String, nullable=True)
 
 # Create tables
 Base.metadata.create_all(bind=engine)

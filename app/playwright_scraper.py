@@ -1,4 +1,5 @@
 from playwright.sync_api import sync_playwright
+from playwright_stealth import stealth_sync
 from contextlib import contextmanager
 from typing import Optional, TYPE_CHECKING
 import shutil
@@ -9,12 +10,13 @@ if TYPE_CHECKING:
     from playwright.sync_api import Browser, Page
 
 class Scraper:
-    browser: Optional["Browser"] = None
-    page: Optional["Page"] = None
-
-    def __init__(self, reset_profile: bool = False):
+    browser: Optional["Browser"]
+    page: Optional["Page"]
+    stealth: bool
+    def __init__(self, reset_profile: bool = False, stealth: bool = False):
         logger.info(f"Initializing Scraper with reset_profile={reset_profile}")
         self.copy_profile(reset_profile)
+        self.stealth = stealth
 
     def copy_profile(self, reset_profile: bool = False):
         profile_path = "/data/.config/google-chrome"
@@ -48,17 +50,22 @@ class Scraper:
                 if self.browser:
                     self.browser.close()
 
-    def raw_scrape(self, url: str) -> str:
+    def raw_scrape(self, url: str, selector: Optional[str] = None) -> str:
         logger.info(f"Starting scrape of URL: {url}")
         with self.launch_browser():
             try:
                 logger.debug("Creating new page")
                 self.page = self.browser.new_page()
+                if self.stealth:
+                    logger.info("Enabling stealth mode")
+                    stealth_sync(self.page)
                 logger.debug(f"Navigating to URL: {url}")
                 self.page.goto(url)
                 logger.debug("Waiting for page load")
-                self.page.wait_for_load_state("load", timeout=10000)
-                logger.debug("Getting page content")
+                if selector:
+                    self.page.wait_for_selector(selector, timeout=10000)
+                else:
+                    self.page.wait_for_load_state("load", timeout=10000)
                 html_content = self.page.content()
                 logger.info(f"Successfully scraped URL: {url}")
                 return html_content

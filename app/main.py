@@ -21,7 +21,9 @@ async def lifespan(app: FastAPI):
     yield
     logger.info("Shutting down")
 
-app = FastAPI(title="Sneaky Snake API", lifespan=lifespan)
+app = FastAPI(title="Sneaky Snake API",
+              lifespan=lifespan,
+              description="Scrape URLs simply, using your own browser profile")
 
 @app.get("/health")
 async def health_check():
@@ -45,7 +47,7 @@ async def scrape(
         for url in scrape_request.urls:
             # check for cache
             logger.debug(f"Checking cache for URL: {url.url}")
-            result = session.query(ScrapeResult).filter(ScrapeResult.url == url.url).first()
+            result = session.query(ScrapeResult).filter(ScrapeResult.url == url.url and ScrapeResult.selector == url.selector).first()
             if result and url.use_cache:
                 logger.info(f"Cache hit for URL: {url.url}")
                 cached_request_ids.append(result.request_id)
@@ -53,8 +55,8 @@ async def scrape(
             if result:
                 logger.info(f"Deleting cached result for URL: {url.url}")
                 session.delete(result)
-            logger.info(f"Creating new scrape request for URL: {url.url}")
-            new_result = ScrapeResult(url=url.url, content=None, processed=False)
+            logger.info(f"Creating new scrape request for URL: {url.url} with selector: {url.selector}")
+            new_result = ScrapeResult(url=url.url, content=None, processed=False, selector=url.selector)
             session.add(new_result)
             session.commit()
             session.refresh(new_result)
@@ -62,7 +64,11 @@ async def scrape(
 
         for request_id in new_request_ids:
             logger.debug(f"Adding background task for request_id: {request_id}")
-            background_tasks.add_task(background_scrape, request_id, delay=randint(0,4), db=db)
+            background_tasks.add_task(background_scrape,
+                                      stealth=scrape_request.stealth,
+                                      request_id=request_id,
+                                      delay=randint(0,4),
+                                      db=db)
 
     logger.info(f"Returning {len(cached_request_ids)} cached and {len(new_request_ids)} new request IDs")
     return ScrapeResponse(request_ids=cached_request_ids + new_request_ids)
@@ -88,11 +94,15 @@ async def get_result(
         processed_at=result.processed_at,
         content=result.content,
         errors=result.errors,
-        processed=result.processed
+        processed=result.processed,
+        selector=result.selector
     )
 
 
-def background_scrape(request_id: str, delay: Optional[int] = 0, db: Session = None):
+def background_scrape(request_id: str,
+                      stealth: bool,
+                      delay: Optional[int] = 0,
+                      db: Session = None):
     logger.info(f"Delaying background scrape for {delay} seconds")
     time.sleep(delay)
     logger.info(f"Starting background scrape for request_id: {request_id}")
@@ -102,9 +112,9 @@ def background_scrape(request_id: str, delay: Optional[int] = 0, db: Session = N
             if not result:
                 logger.error(f"Could not find result for request_id: {request_id}")
                 return
-            scraper = Scraper()
-            logger.debug(f"Attempting to scrape URL: {result.url}")
-            result.content = scraper.raw_scrape(result.url)
+            scraper = Scraper(stealth=stealth)
+            logger.debug(f"Attempting to scrape URL: {result.url} with selector: {result.selector}")
+            result.content = scraper.raw_scrape(result.url, selector=result.selector)
             if not result.content:
                 logger.error(f"Failed to scrape URL: {result.url}")
             else:
